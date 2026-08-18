@@ -12,18 +12,27 @@ import chatbotRoutes from './routes/chatbotRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 connectDb();
-// ✅ CORS setup for credentials + specific origin
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend origin
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 
 app.use(express.json());
-app.use(cookieParser()); // ✅ required for res.cookie to work properly
+app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/journal", journalRoutes);
